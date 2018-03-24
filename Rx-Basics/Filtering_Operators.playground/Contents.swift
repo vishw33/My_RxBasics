@@ -162,7 +162,7 @@ example(of: "take") {
 let disposeBag = DisposeBag()
 
     
-    //: Will notify the number of events take subscribed to
+//: Will notify the number of events take subscribed to
 // 1
 Observable.of(1, 2, 3, 4, 5, 6)
     // 2
@@ -181,4 +181,74 @@ Observable.of(1, 2, 3, 4, 5, 6)
     
      sub.subscribe(onNext:{print($0)})
     
+}
+
+example(of: "takeWhile")
+{
+    
+    //: Will notify the number of events take subscribed to when given condition is satisfied
+    
+    //: Opposite of SkipWhile
+
+let disposeBag = DisposeBag()
+
+// 1
+Observable.of(2, 2, 4, 4, 6, 6)
+    // 2
+    .enumerated()
+    // 3
+    .takeWhile { index, integer in
+        // 4
+        integer % 2 == 0 && index < 3
+    }
+    // 5
+    .map { $0.element }
+    // 6
+    .subscribe(onNext: {
+        print($0)
+    })
+    .disposed(by: disposeBag)
+}
+
+
+example(of: "takeUntil") {
+    
+    let disposeBag = DisposeBag()
+    
+    //: here subject will notify on next until trigger is notified for first time
+    
+    // 1
+    let subject = PublishSubject<String>()
+    let trigger = PublishSubject<String>()
+    
+    // 2
+    subject
+        .takeUntil(trigger)
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+    
+    // 3
+    subject.onNext("1")
+    subject.onNext("2")
+    trigger.onNext("V")
+    subject.onNext("5")
+}
+
+example(of: "distinctUntilChanged") {
+
+    
+    //: distinctUntilChanged will noify only if previous value and current value are not equal
+    
+let disposeBag = DisposeBag()
+
+// 1
+Observable.of("A", "A", "B", "B", "A")
+    // 2
+    .distinctUntilChanged()
+    .subscribe(onNext: {
+        print($0)
+    })
+    .disposed(by: disposeBag)
 }
