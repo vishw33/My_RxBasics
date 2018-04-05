@@ -92,3 +92,90 @@ student
     charlotte.score.onNext(85)
 
 }
+
+example(of: "flatMapLatest") {
+    
+    //: same as flatmap but emit only latest elements
+    let disposeBag = DisposeBag()
+    
+    let ryan = Student(score: BehaviorSubject(value: 80))
+    let charlotte = Student(score: BehaviorSubject(value: 90))
+    
+    let student = PublishSubject<Student>()
+    student
+        .flatMapLatest {
+            $0.score
+        }
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+    
+    student.onNext(ryan)
+    
+    ryan.score.onNext(85)
+    
+    student.onNext(charlotte)
+    
+    // 1
+    ryan.score.onNext(95)
+    
+    charlotte.score.onNext(100)
+}
+
+example(of: "materialize and dematerialize") {
+    
+    // 1
+    enum MyError: Error {
+        
+        case anError
+    }
+    
+    let disposeBag = DisposeBag()
+    
+    // 2
+    let ryan = Student(score: BehaviorSubject(value: 80))
+    let charlotte = Student(score: BehaviorSubject(value: 100))
+    
+    let student = BehaviorSubject(value: ryan)
+    
+    let studentScore = student
+        .flatMapLatest {
+            $0.score.materialize()
+    }
+    
+    // 2
+    studentScore
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+    
+    // 3
+    ryan.score.onNext(85)
+    
+    ryan.score.onError(MyError.anError)
+    
+    ryan.score.onNext(90)
+    
+    // 4
+    student.onNext(charlotte)
+    
+    
+    studentScore
+        // 1
+        .filter {
+        guard $0.error == nil else {
+        print($0.error!)
+        return false
+        }
+        
+        return true
+        }
+        // 2
+        .dematerialize()
+        .subscribe(onNext: {
+        print($0)
+        })
+        .disposed(by: disposeBag)
+}
